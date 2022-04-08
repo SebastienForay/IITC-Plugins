@@ -2,8 +2,8 @@
 // @author         fisher01
 // @name           IITC plugin: Link under field range
 // @category       Layer
-// @version        1.0.1
-// @description    Displays the 500m raidus around portals for linking nuder fields
+// @version        1.1.0
+// @description    Displays the 500m radius around each selected portals for linking under fields. Ranges can be removed using the "Clear Link Under Field" link in the IITC toolbox under portal details.
 // @id             iitc-plugin-linkunderfieldrange
 // @updateURL      https://github.com/SebastienForay/IITC-Plugins/raw/main/LinkUnderFieldRange/iitc-plugin-linkunderfieldrange.meta.js
 // @downloadURL    https://github.com/SebastienForay/IITC-Plugins/raw/main/LinkUnderFieldRange/iitc-plugin-linkunderfieldrange.user.js
@@ -23,7 +23,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
   plugin_info.buildName = 'iitc';
-  plugin_info.dateTimeVersion = '20220407.183000';
+  plugin_info.dateTimeVersion = '20220408.103500';
   plugin_info.pluginId = 'LinkUnderFieldRange';
   // PLUGIN START ///////////////////////////////////////////////////////
 
@@ -37,13 +37,10 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
     }
 
     if (window.map.hasLayer(window.plugin.linkunderfieldrange.linkunderfieldrangeLayers)) {
-      window.plugin.linkunderfieldrange.linkunderfieldrangeLayers.clearLayers();
-
-      $.each(window.portals, function(i, portal) {
-       window.plugin.linkunderfieldrange.draw(portal);
-      });
-
-      window.plugin.linkunderfieldrange.urlMarker();
+      var p = window.portals[window.selectedPortal];
+      if (p) {
+        window.plugin.linkunderfieldrange.draw(p);
+      }
     }
   }
 
@@ -61,18 +58,21 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
     }
   }
 
+  var clearlinkunderfieldrange = function() {
+    window.plugin.linkunderfieldrange.linkunderfieldrangeLayers.clearLayers();
+  }
+
   // Define and add the linkunderfieldrange circles for a given portal
   window.plugin.linkunderfieldrange.draw = function(portal) {
     // Create a new location object for the portal
     var coo = portal._latlng;
     var latlng = new L.LatLng(coo.lat, coo.lng);
 
-    // Specify the no submit circle options
-    var circleOptions = {color:'red', opacity:1, fillColor:'orange', fillOpacity:0.40, weight:1, clickable:false, interactive:false};
-    var range = 500;
+    // Specify the link range circle options
+    var circleOptions = {radius:500, color:'orange', weight:3, fill:false, dashArray:'10', dashOffset:'0', clickable:false, interactive:false};
 
     // Create the circle object with specified options
-    var circle = new L.Circle(latlng, range, circleOptions);
+    var circle = new L.Circle(latlng, circleOptions);
 
     // Add the new circle to the linkunderfieldrange draw layer
     circle.addTo(window.plugin.linkunderfieldrange.linkunderfieldrangeLayers);
@@ -83,10 +83,18 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
     window.plugin.linkunderfieldrange.linkunderfieldrangeLayers = new L.LayerGroup();
     window.addLayerGroup('Link under field range', window.plugin.linkunderfieldrange.linkunderfieldrangeLayers, true);
     window.plugin.linkunderfieldrange.layerlist['Link under field range'] =  window.plugin.linkunderfieldrange.linkunderfieldrangeLayers;
-    addHook('mapDataRefreshEnd', window.plugin.linkunderfieldrange.update);
+    addHook('portalSelected', window.plugin.linkunderfieldrange.update);
     window.pluginCreateHook('displayedLayerUpdated');
     window.addHook('displayedLayerUpdated',  window.plugin.linkunderfieldrange.setSelected);
     window.updateDisplayedLayerGroup = window.updateDisplayedLayerGroupModified;
+
+    // this adds the "Clear Link Under Field" link to the IITC toolbox using JQuery syntax
+    // the .click(clearlinkunderfieldrange) instructs IITC to call the clearlinkunderfieldrange function (above) when the link is clicked
+    $("<a>")
+      .html("Clear Link Under Field")
+      .attr("title", "Remove drawn ranges for linking under fields")
+      .click(clearlinkunderfieldrange)
+      .appendTo("#toolbox");
   }
 
   // Overload for IITC default in order to catch the manual select/deselect event and handle it properly
