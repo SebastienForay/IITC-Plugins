@@ -2,7 +2,7 @@
 // @author         fisher01
 // @name           IITC plugin: Link under field range
 // @category       Layer
-// @version        1.1.0
+// @version        1.1.1
 // @description    Displays the 500m radius around each selected portals for linking under fields. Ranges can be removed using the "Clear Link Under Field" link in the IITC toolbox under portal details.
 // @id             iitc-plugin-linkunderfieldrange
 // @updateURL      https://github.com/SebastienForay/IITC-Plugins/raw/main/LinkUnderFieldRange/iitc-plugin-linkunderfieldrange.meta.js

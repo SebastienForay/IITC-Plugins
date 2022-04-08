@@ -2,7 +2,7 @@
 // @author         fisher01
 // @name           IITC plugin: Link under field range
 // @category       Layer
-// @version        1.1.0
+// @version        1.1.1
 // @description    Displays the 500m radius around each selected portals for linking under fields. Ranges can be removed using the "Clear Link Under Field" link in the IITC toolbox under portal details.
 // @id             iitc-plugin-linkunderfieldrange
 // @updateURL      https://github.com/SebastienForay/IITC-Plugins/raw/main/LinkUnderFieldRange/iitc-plugin-linkunderfieldrange.meta.js
@@ -23,13 +23,14 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
   plugin_info.buildName = 'iitc';
-  plugin_info.dateTimeVersion = '20220408.103500';
+  plugin_info.dateTimeVersion = '20220408.115935';
   plugin_info.pluginId = 'LinkUnderFieldRange';
   // PLUGIN START ///////////////////////////////////////////////////////
 
   // use own namespace for plugin
   window.plugin.linkunderfieldrange = function() {};
   window.plugin.linkunderfieldrange.layerlist = {};
+  window.plugin.linkunderfieldrange.circleslist = [];
 
   window.plugin.linkunderfieldrange.update = function() {
     if (!window.map.hasLayer(window.plugin.linkunderfieldrange.linkunderfieldrangeLayers)) {
@@ -60,6 +61,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 
   var clearlinkunderfieldrange = function() {
     window.plugin.linkunderfieldrange.linkunderfieldrangeLayers.clearLayers();
+    window.plugin.linkunderfieldrange.circleslist.length = 0;
   }
 
   // Define and add the linkunderfieldrange circles for a given portal
@@ -69,16 +71,36 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
     var latlng = new L.LatLng(coo.lat, coo.lng);
 
     // Specify the link range circle options
-    var circleOptions = {radius:500, color:'orange', weight:3, fill:false, dashArray:'10', dashOffset:'0', clickable:false, interactive:false};
+    var circleOptions = {radius:500, color:'orange', weight:3, fill:false, dashArray:'10', dashOffset:'0', clickable:false, interactive:true};
 
     // Create the circle object with specified options
     var circle = new L.Circle(latlng, circleOptions);
 
-    // Add the new circle to the linkunderfieldrange draw layer
-    circle.addTo(window.plugin.linkunderfieldrange.linkunderfieldrangeLayers);
+    var canAdd = true;
+    $.each(window.plugin.linkunderfieldrange.circleslist, function(i, c) {
+      if (c.getLatLng().equals(circle.getLatLng())) {
+        canAdd = false;
+      }
+    });
+
+    if (canAdd) {
+      window.plugin.linkunderfieldrange.circleslist.push(circle);
+
+      // Add the new circle to the linkunderfieldrange draw layer if not any at this latLng
+      circle.addTo(window.plugin.linkunderfieldrange.linkunderfieldrangeLayers).on("click", circleClick);
+      window.Render.prototype.bringPortalsToFront();
+    }
   }
 
- // Initialize the plugin and display linkunderfieldranges if at an appropriate zoom level
+  var circleClick = function(e) {
+    window.plugin.linkunderfieldrange.linkunderfieldrangeLayers.removeLayer(e.target);
+    var i = window.plugin.linkunderfieldrange.circleslist.indexOf(e.target);
+    if (i > -1) {
+      window.plugin.linkunderfieldrange.circleslist.splice(i, 1);
+    }
+  }
+
+  // Initialize the plugin and display linkunderfieldranges if at an appropriate zoom level
   var setup = function() {
     window.plugin.linkunderfieldrange.linkunderfieldrangeLayers = new L.LayerGroup();
     window.addLayerGroup('Link under field range', window.plugin.linkunderfieldrange.linkunderfieldrangeLayers, true);
