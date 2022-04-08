@@ -91,7 +91,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
     // this adds the "Clear Link Under Field" link to the IITC toolbox using JQuery syntax
     // the .click(clearlinkunderfieldrange) instructs IITC to call the clearlinkunderfieldrange function (above) when the link is clicked
     $("<a>")
-      .html("Clear Link Under Field")
+      .html("Clear Link Under Field Range")
       .attr("title", "Remove drawn ranges for linking under fields")
       .click(clearlinkunderfieldrange)
       .appendTo("#toolbox");
