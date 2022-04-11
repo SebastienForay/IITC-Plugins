@@ -2,7 +2,7 @@
 // @author         fisher01
 // @name           IITC plugin: Link under field range
 // @category       Layer
-// @version        1.1.1
+// @version        1.2.0
 // @description    Displays the 500m radius around each selected portals for linking under fields. Ranges can be removed using the "Clear Link Under Field" link in the IITC toolbox under portal details.
 // @id             iitc-plugin-linkunderfieldrange
 // @updateURL      https://github.com/SebastienForay/IITC-Plugins/raw/main/LinkUnderFieldRange/iitc-plugin-linkunderfieldrange.meta.js
@@ -23,7 +23,7 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
 //PLUGIN AUTHORS: writing a plugin outside of the IITC build environment? if so, delete these lines!!
 //(leaving them in place might break the 'About IITC' page or break update checks)
   plugin_info.buildName = 'iitc';
-  plugin_info.dateTimeVersion = '20220408.115935';
+  plugin_info.dateTimeVersion = '20220411.104500';
   plugin_info.pluginId = 'LinkUnderFieldRange';
   // PLUGIN START ///////////////////////////////////////////////////////
 
@@ -31,9 +31,27 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
   window.plugin.linkunderfieldrange = function() {};
   window.plugin.linkunderfieldrange.layerlist = {};
   window.plugin.linkunderfieldrange.circleslist = [];
+  window.plugin.linkunderfieldrange.isActive = false;
+
+  window.plugin.linkunderfieldrange.onBtnClick = function(ev) {
+      var btn = window.plugin.linkunderfieldrange.button;
+
+      if(btn.classList.contains("active")) {
+          btn.classList.remove("active");
+          window.plugin.linkunderfieldrange.isActive = false;
+      } else {
+          btn.classList.add("active");
+          window.plugin.linkunderfieldrange.isActive = true;
+          window.plugin.linkunderfieldrange.update();
+      }
+  };
 
   window.plugin.linkunderfieldrange.update = function() {
     if (!window.map.hasLayer(window.plugin.linkunderfieldrange.linkunderfieldrangeLayers)) {
+      return;
+    }
+
+    if (!window.plugin.linkunderfieldrange.isActive) {
       return;
     }
 
@@ -117,6 +135,31 @@ if(typeof window.plugin !== 'function') window.plugin = function() {};
       .attr("title", "Remove drawn ranges for linking under fields")
       .click(clearlinkunderfieldrange)
       .appendTo("#toolbox");
+
+    // this adds the IITC toolbar button to de/activate showing range when portal is selected
+	$('<style>').prop('type', 'text/css').html('\
+.leaflet-control-linkunderfieldrange a\
+{\
+	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbG5zOnhsaW5rPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5L3hsaW5rIiB2aWV3Qm94PSIwIDAgMjYgMjYiIHdpZHRoPSIyNiIgaGVpZ2h0PSIyNiI+PGVsbGlwc2Ugcng9IjEwIiByeT0iMTAiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDEzIDEzKSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2UtZGFzaGFycmF5PSI0Ii8+PGVsbGlwc2Ugcng9IjEiIHJ5PSIxIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMyAxMykiIHN0cm9rZS13aWR0aD0iMCIvPjxnPjxsaW5lIHgxPSItOCIgeTE9Ii0yIiB4Mj0iLTIiIHkyPSItOCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEgMTUpIiBmaWxsPSJub25lIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMC41Ii8+PGxpbmUgeDE9Ii0yIiB5MT0iMCIgeDI9Ii00IiB5Mj0iMCIgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjEgNykiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLXdpZHRoPSIwLjUiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIvPjxsaW5lIHgxPSIwIiB5MT0iLTQiIHgyPSIwIiB5Mj0iLTIiIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE5IDExKSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAwIiBzdHJva2Utd2lkdGg9IjAuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIi8+PC9nPjwvc3ZnPg==");\
+}\
+.leaflet-control-linkunderfieldrange a.active\
+{\
+	background-color: orange;\
+}\
+').appendTo('head');
+    var parent = $(".leaflet-top.leaflet-left", window.map.getContainer());
+
+    var button = document.createElement("a");
+    button.className = "leaflet-bar-part";
+    button.addEventListener("click", window.plugin.linkunderfieldrange.onBtnClick, false);
+    button.title = 'Show selected portal range for linking under fields';
+
+    var container = document.createElement("div");
+    container.className = "leaflet-control-linkunderfieldrange leaflet-bar leaflet-control";
+    container.appendChild(button);
+    parent.append(container);
+
+    window.plugin.linkunderfieldrange.button = button;
   }
 
   // Overload for IITC default in order to catch the manual select/deselect event and handle it properly
